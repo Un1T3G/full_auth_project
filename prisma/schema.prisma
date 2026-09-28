@@ -1,0 +1,86 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String?              // null if OAuth only
+  name                String?
+  role                Role                 @default(USER)
+  emailVerified       DateTime?
+  isMfaEnabled        Boolean              @default(false)
+  mfaSecret           String?              // Encrypted or protected TOTP secret
+  mfaBackupCodes      String[]             // Hashed backup codes
+  accounts            Account[]
+  sessions            Session[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([email])
+}
+
+model Account {
+  id                String   @id @default(uuid())
+  userId            String
+  provider          String   // e.g. "google", "github"
+  providerAccountId String
+  accessToken       String?  @db.Text
+  refreshToken      String?  @db.Text
+  expiresAt         Int?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}

@@ -1,0 +1,104 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  mfaTicket: String
+  requiresMfa: Boolean
+  user: User
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type MfaSetupPayload {
+  """One-time plaintext backup codes (shown only once)"""
+  backupCodes: [String!]!
+
+  """Base64 Data URL for QR code"""
+  qrCodeUrl: String!
+
+  """TOTP secret key for manual entry"""
+  secret: String!
+}
+
+type Mutation {
+  """Disables MFA for current user with code verification"""
+  disableMfa(totpCode: String!): Boolean!
+
+  """Verifies first TOTP code and activates MFA for user"""
+  enableMfa(totpCode: String!): Boolean!
+
+  """Logs in user with email and password"""
+  login(input: LoginInput!): AuthPayload!
+
+  """Logs in or registers user via OAuth provider (Google, GitHub)"""
+  loginWithOAuth(code: String!, provider: String!): AuthPayload!
+
+  """Logs out user and clears session"""
+  logout: Boolean!
+
+  """Logs out from all devices, revoking all sessions"""
+  logoutAll: Boolean!
+
+  """Registers a new user"""
+  register(input: RegisterInput!): Boolean!
+
+  """Requests a password reset link to be sent to email"""
+  requestPasswordReset(email: String!): Boolean!
+
+  """Resets password using token and revokes all active sessions"""
+  resetPassword(newPassword: String!, token: String!): Boolean!
+
+  """Revokes a specific user session by id"""
+  revokeSession(sessionId: String!): Boolean!
+
+  """Generates TOTP secret, QR code, and backup codes"""
+  setupMfa: MfaSetupPayload!
+
+  """Verifies email address using confirmation token"""
+  verifyEmail(token: String!): Boolean!
+
+  """Completes 2-factor login challenge via TOTP or backup code"""
+  verifyMfaLogin(code: String!, mfaTicket: String!): AuthPayload!
+}
+
+type Query {
+  me: User
+
+  """Lists all active sessions for current user"""
+  mySessions: [Session!]!
+}
+
+input RegisterInput {
+  email: String!
+  name: String
+  password: String!
+}
+
+"""User access role"""
+enum Role {
+  ADMIN
+  USER
+}
+
+type Session {
+  createdAt: String!
+  expiresAt: String!
+  id: ID!
+  ipAddress: String
+  isCurrent: Boolean
+  userAgent: String
+}
+
+type User {
+  createdAt: String!
+  email: String!
+  emailVerified: Boolean!
+  id: ID!
+  isMfaEnabled: Boolean!
+  name: String
+  role: Role!
+}
